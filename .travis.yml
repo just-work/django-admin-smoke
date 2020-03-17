@@ -16,7 +16,6 @@ install:
   - pip install codecov
 
 script:
-  - cd src
   - python -m coverage run ./manage.py test -v3
 
 after_success: codecov
