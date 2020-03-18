@@ -167,13 +167,15 @@ class AdminBaseTestCase(BaseTestCase):
         """ Get initial request data from form."""
         initial = form.initial.copy()
         data = {}
-        if hasattr(form, 'instance') and form.instance.pk:
+        if hasattr(form, 'instance') and form.instance:
             model = form._meta.model
             while model._meta.proxy:
                 model = model._meta.proxy_for_model
-            pk_field = next(f for f in model._meta.local_fields
-                            if f.primary_key)
-            initial[pk_field.name] = form.instance.pk
+
+            for f in model._meta.local_fields:
+                if f.name in form.fields or f.primary_key and form.instance.pk:
+                    initial[f.name] = getattr(form.instance, f.attname)
+
         for k, v in initial.items():
             try:
                 field = form.fields[k]
