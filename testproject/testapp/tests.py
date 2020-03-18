@@ -9,15 +9,18 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.project = models.Project.objects.create(name='first')
-        self.task = models.Task.objects.create(name='first',
+        self.project = models.Project.objects.create(name='project', pid=123)
+        self.task = models.Task.objects.create(name='task',
                                                project=self.project)
+        self.tag = self.project.tags.create(name='tag')
 
     def transform_to_new(self, data: dict) -> dict:
         data = data.copy()
-        del data['id']
+        del data['pid']
         data['name'] = 'new'
         self.reset_inline_data(data, 'task_set', 'project')
+        self.reset_inline_data(
+            data, 'testapp-tag-content_type-object_id', None, pk='tid')
         data['task_set-0-name'] += '_new'
         return data
 
