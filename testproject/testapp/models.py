@@ -1,10 +1,22 @@
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes import fields
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
+class Tag(models.Model):
+    tid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=32, blank=True)
+    content_type = models.ForeignKey(ContentType, models.CASCADE)
+    object_id = models.IntegerField()
+    related = fields.GenericForeignKey()
+
+
 class Project(models.Model):
+    pid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=10, unique=True)
     members = models.ManyToManyField(get_user_model(), blank=True)
+    tags = fields.GenericRelation(Tag)
 
 
 class Task(models.Model):

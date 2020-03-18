@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import TypeVar, Type, Union
+from typing import TypeVar, Type, Union, Optional
 from unittest import mock
 
 from django.contrib.admin import ModelAdmin, site
@@ -116,10 +116,19 @@ class AdminBaseTestCase(BaseTestCase):
         self.client.login(username='admin', password='admin_admin')
 
     @staticmethod
-    def reset_inline_data(data: dict, prefix: str, related: str, pk='id'):
-        """ Transforms saved records in formsets to new ones."""
+    def reset_inline_data(data: dict, prefix: str, related: Optional[str],
+                          pk: str = 'id'):
+        """ Transforms saved records in formsets to new ones.
+
+        :param data: form data dictionary
+        :param prefix: inline formset prefix
+        :param related: name of inline model ForeignKey field pointing to
+            edited object (None for GenericInlineModelAdmin)
+        :param pk: name of inline model primary key field
+        """
         del data[f'{prefix}-0-{pk}']
-        del data[f'{prefix}-0-{related}']
+        if related is not None:
+            del data[f'{prefix}-0-{related}']
         data[f'{prefix}-INITIAL_FORMS'] = 0
 
     @property
@@ -158,13 +167,13 @@ class AdminBaseTestCase(BaseTestCase):
         """ Get initial request data from form."""
         initial = form.initial.copy()
         data = {}
-        if hasattr(form, 'instance') and form.instance.id:
+        if hasattr(form, 'instance') and form.instance.pk:
             model = form._meta.model
             while model._meta.proxy:
                 model = model._meta.proxy_for_model
             pk_field = next(f for f in model._meta.local_fields
                             if f.primary_key)
-            initial[pk_field.name] = form.instance.id
+            initial[pk_field.name] = form.instance.pk
         for k, v in initial.items():
             try:
                 field = form.fields[k]
@@ -300,7 +309,7 @@ class CommonAdminTests:
         self.assertFalse(self.get_errors_from_response(r))
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.model.objects.count(), c + 1)
-        obj = self.model.objects.order_by('id').last()
+        obj = self.model.objects.order_by(self.opts.pk.name).last()
         if hasattr(obj, 'created'):
             # checks TimeStampModel.created timestamp
             self.assertEqual(obj.created, self.now)
