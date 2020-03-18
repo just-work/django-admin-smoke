@@ -1,3 +1,5 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from admin_smoke.tests import AdminTests, AdminBaseTestCase
 from testproject.testapp import admin, models
 
@@ -10,8 +12,8 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
     def setUp(self):
         super().setUp()
         self.project = models.Project.objects.create(name='project', pid=123)
-        self.task = models.Task.objects.create(name='task',
-                                               project=self.project)
+        self.task = self.project.task_set.create(
+            name='task', attachment=SimpleUploadedFile("txt.doc", b'text'))
         self.tag = self.project.tags.create(name='tag')
 
     def transform_to_new(self, data: dict) -> dict:
@@ -22,7 +24,12 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
         self.reset_inline_data(
             data, 'testapp-tag-content_type-object_id', None, pk='tid')
         data['task_set-0-name'] += '_new'
+        data['task_set-0-attachment'] = SimpleUploadedFile("doc.txt", b'text')
         return data
 
     def prepare_deletion(self):
         self.task.delete()
+
+    def test_changeform_save(self):
+        super().test_changeform_save()
+

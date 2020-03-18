@@ -22,3 +22,5 @@ class Project(models.Model):
 class Task(models.Model):
     project = models.ForeignKey(Project, models.PROTECT)
     name = models.CharField(max_length=10, unique=True)
+    attachment = models.FileField()
+    visible = models.BooleanField(default=True)
