@@ -29,7 +29,3 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
 
     def prepare_deletion(self):
         self.task.delete()
-
-    def test_changeform_save(self):
-        super().test_changeform_save()
-
