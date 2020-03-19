@@ -9,12 +9,13 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
     model = models.Project
     object_name = 'project'
 
-    def setUp(self):
-        super().setUp()
-        self.project = models.Project.objects.create(name='project', pid=123)
-        self.task = self.project.task_set.create(
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.project = models.Project.objects.create(name='project', pid=123)
+        cls.task = cls.project.task_set.create(
             name='task', attachment=SimpleUploadedFile("txt.doc", b'text'))
-        self.tag = self.project.tags.create(name='tag')
+        cls.tag = cls.project.tags.create(name='tag')
 
     def transform_to_new(self, data: dict) -> dict:
         data = data.copy()

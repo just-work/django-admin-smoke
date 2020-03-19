@@ -1,5 +1,5 @@
 from datetime import timedelta, datetime
-from typing import TypeVar, Type, Union, Optional
+from typing import TypeVar, Type, Union, Optional, List, Tuple
 from unittest import mock
 
 from django.contrib.admin import ModelAdmin, site
@@ -65,8 +65,51 @@ class TimeMixin:
         return self.now
 
 
-class BaseTestCase(TimeMixin, TestCase):
+class BaseTestCaseMeta(type):
+    """
+    Metaclass for `BaseTestCases` to override `cls.__setattr__`.
+
+    It is useful to create django models in `TestCase` class methods, like
+    `setUpTestData` or `setUpClass`. Main advantage of such implementation is
+    that every object is created once per test case, not once per test. Main
+    disadvantage is that every object preserves in-memory state between
+    subsequent tests.
+
+    This metaclass intercepts adding new django model instances as cls members
+    and collect it to created_objects list. This list is then used to reset
+    in-memory state by calling `refresh_from_db` in `setUp()`.
+
+
+    """
+    _created_objects: List[Tuple[int, models.Model]]
+
+    def __setattr__(cls, key, value):
+        if isinstance(value, models.Model):
+            cls._created_objects.append((value.pk, value))
+        return super().__setattr__(key, value)
+
+
+class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
     """ Base class for django tests."""
+
+    _created_objects = []
+
+    @classmethod
+    def refresh_objects(cls):
+        """
+        Reset in-memory changed for django models that are stored as
+        class attributes.
+        """
+        for pk, obj in cls._created_objects:
+            obj.pk = pk
+            try:
+                obj.refresh_from_db()
+                # noinspection PyProtectedMember
+                obj._state.fields_cache.clear()
+            except models.ObjectDoesNotExist:
+                # obj does not exist in database, i.e. it is deleted by current
+                # test
+                pass
 
     @staticmethod
     def update_object(obj, *args, **kwargs):
@@ -79,6 +122,10 @@ class BaseTestCase(TimeMixin, TestCase):
     def reload(obj: M) -> M:
         """ Fetch same object from database."""
         return obj._meta.model.objects.get(pk=obj.pk)
+
+    def setUp(self):
+        self.refresh_objects()
+        super().setUp()
 
     def assert_object_fields(self, obj: models.Model, **kwargs):
         """ Obtains object from database and compares field values."""
