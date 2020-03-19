@@ -67,7 +67,19 @@ class TimeMixin:
 
 class BaseTestCaseMeta(type):
     """
-    Collect and reset django models attributes initialized in SetUpTestData.
+    Metaclass for `BaseTestCases` to override `cls.__setattr__`.
+
+    It is useful to create django models in `TestCase` class methods, like
+    `setUpTestData` or `setUpClass`. Main advantage of such implementation is
+    that every object is created once per test case, not once per test. Main
+    disadvantage is that every object preserves in-memory state between
+    subsequent tests.
+
+    This metaclass intercepts adding new django model instances as cls members
+    and collect it to created_objects list. This list is then used to reset
+    in-memory state by calling `refresh_from_db` in `setUp()`.
+
+
     """
     _created_objects: List[Tuple[int, models.Model]]
 
@@ -95,6 +107,8 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
                 # noinspection PyProtectedMember
                 obj._state.fields_cache.clear()
             except models.ObjectDoesNotExist:
+                # obj does not exist in database, i.e. it is deleted by current
+                # test
                 pass
 
     @staticmethod
