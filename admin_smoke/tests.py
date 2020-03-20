@@ -109,6 +109,13 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
             # noinspection PyProtectedMember
             obj._state.fields_cache.clear()
 
+    @classmethod
+    def forget_object(cls, obj: models.Model):
+        """
+        Method for removing django model instance from created objects cache
+        """
+        cls._created_objects.remove((obj.pk, obj))
+
     @staticmethod
     def update_object(obj, *args, **kwargs):
         """ Update django model object in database only."""
