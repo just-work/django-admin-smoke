@@ -83,6 +83,11 @@ class BaseTestCaseMeta(type):
     """
     _created_objects: List[Tuple[int, models.Model]]
 
+    def __new__(mcs, name, bases, attrs):
+        # Add created django model instances cache as class attribute
+        attrs['_created_objects'] = []
+        return super().__new__(mcs, name, bases, attrs)
+
     def __setattr__(cls, key, value):
         if isinstance(value, models.Model):
             cls._created_objects.append((value.pk, value))
@@ -92,8 +97,6 @@ class BaseTestCaseMeta(type):
 class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
     """ Base class for django tests."""
 
-    _created_objects = []
-
     @classmethod
     def refresh_objects(cls):
         """
@@ -102,14 +105,16 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
         """
         for pk, obj in cls._created_objects:
             obj.pk = pk
-            try:
-                obj.refresh_from_db()
-                # noinspection PyProtectedMember
-                obj._state.fields_cache.clear()
-            except models.ObjectDoesNotExist:
-                # obj does not exist in database, i.e. it is deleted by current
-                # test
-                pass
+            obj.refresh_from_db()
+            # noinspection PyProtectedMember
+            obj._state.fields_cache.clear()
+
+    @classmethod
+    def forget_object(cls, obj: models.Model):
+        """
+        Method for removing django model instance from created objects cache
+        """
+        cls._created_objects.remove((obj.pk, obj))
 
     @staticmethod
     def update_object(obj, *args, **kwargs):
