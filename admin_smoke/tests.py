@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
-from typing import TypeVar, Type, Union, Optional, List, Tuple
+from typing import Any, TypeVar, Type, Union, Optional, List, Tuple, Iterable
+from typing import Dict
 from unittest import mock
 
 from django.contrib.admin import ModelAdmin, site
@@ -324,7 +325,18 @@ class CommonAdminTests:
         return text
 
     def post_changeform(self: AdminTestsDerived, create=False,
-                        erase_data=False):
+                        erase: Union[None, str, Iterable[str]] = None,
+                        fields: Dict[str, Any] = None):
+        """
+        Fetches form data from change view and performs POST request.
+
+        :param create: New object creation flag. Transforms existing form data
+            to valid data for a new object, makes POST request to "add" url.
+        :param erase: Erase form data from request. Accepts '__all__' or a list
+            of form field names.
+        :param fields: New fields values.
+        :return: POST response.
+        """
         r = self.client.get(self.change_url)
         data = self.get_form_data_from_response(r)
         if create:
@@ -333,8 +345,16 @@ class CommonAdminTests:
         else:
             url = self.change_url
         # clear form fields, preserving only django formset management form
-        if erase_data:
-            data = {k: data[k] for k in data if '_FORMS' in k}
+        if erase:
+            for k in list(data):
+                if '_FORMS' in k:
+                    # skip management fields
+                    continue
+                if k in erase or erase == '__all__':
+                    data.pop(k)
+        # set new fields values
+        if fields:
+            data.update(fields)
         return self.client.post(url, data=data)
 
     def test_changeform_view(self: AdminTestsDerived):
@@ -390,7 +410,7 @@ class AdminTests(CommonAdminTests):
         Creating new object without required fields returns proper response
         with error list.
         """
-        r = self.post_changeform(create=True, erase_data=True)
+        r = self.post_changeform(create=True, erase='__all__')
         self.assertEqual(r.status_code, 200)
         self.assertIsNotNone(self.get_errors_from_response(r))
 
