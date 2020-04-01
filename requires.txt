@@ -1,2 +1,2 @@
+dj-inmemorystorage==2.1.0
 Django==3.0.5
-dj-inmemorystorage==2.0.0
