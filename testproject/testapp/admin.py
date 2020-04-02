@@ -28,3 +28,5 @@ class TagInline(GenericTabularInline):
 @admin.register(models.Project)
 class ProjectAdmin(admin.ModelAdmin):
     inlines = (TaskInline, TagInline)
+    list_display = ('pid', 'name',)
+    list_editable = ('name',)
