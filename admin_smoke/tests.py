@@ -315,7 +315,7 @@ class CommonAdminTests:
             n = self.opts.verbose_name
         else:
             n = self.opts.verbose_name_plural
-        if self.admin.list_editable:
+        if self.admin.list_editable and count:
             save = (' <input type="submit" name="_save" '
                     'class="default" value="%s">' % _("Save"))
         else:
@@ -400,6 +400,16 @@ class CommonAdminTests:
         self.assertFalse(self.get_errors_from_response(r))
         self.assertFalse(self.model.objects.filter(
             pk=self.get_object().pk).exists())
+
+    def test_empty_changelist(self: AdminTestsDerived):
+        """
+        Empty object list rendered correctly.
+        """
+        self.prepare_deletion()
+        self.model.objects.all().delete()
+        url = self.changelist_url
+        count = 0
+        self.assert_row_count(url, count)
 
 
 class AdminTests(CommonAdminTests):
