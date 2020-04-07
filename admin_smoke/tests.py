@@ -413,7 +413,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
         self.assertFalse(self.model.objects.filter(
             pk=self.get_object().pk).exists())
 
-    def test_empty_changelist(self: AdminTestsDerived):
+    def test_empty_changelist(self) -> None:
         """
         Empty object list rendered correctly.
         """
