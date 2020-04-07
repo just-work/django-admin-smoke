@@ -264,7 +264,7 @@ class AdminBaseTestCase(BaseTestCase):
         """ Get form data from response context."""
         data = {'_continue': 'save and continue'}
         cd = getattr(r, 'context_data')
-        form: ModelForm = cd['adminform'].form  # type: ignore
+        form: ModelForm = cd['adminform'].form
         data.update(self.get_form_data(form))
         formsets = cd['inline_admin_formsets']
         for inline_formset in formsets:
