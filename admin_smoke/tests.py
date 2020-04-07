@@ -1,15 +1,19 @@
+from abc import ABCMeta
 from datetime import timedelta, datetime
-from typing import Any, TypeVar, Type, Union, Optional, List, Tuple, Iterable
-from typing import Dict
+from typing import (Any, TypeVar, Type, Union, Optional, List, Tuple, Iterable,
+                    cast, TYPE_CHECKING, Dict)
 from unittest import mock
 
 from django.contrib.admin import ModelAdmin, site
-from django.contrib.admin.helpers import AdminForm
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import AutoField
 from django.db.models.fields.files import FieldFile
+from django.db.models.options import Options
 from django.forms import MultiWidget
-from django.http import HttpResponse
+from django.forms.models import ModelForm
+from django.forms.utils import ErrorList
+from django.http.response import HttpResponse, HttpResponseRedirect
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -20,9 +24,6 @@ second = timedelta(seconds=1)
 
 M = TypeVar('M', bound=models.Model)
 
-# type definition for TestCase subclass mixed with TimeMixin
-TimeDerived = Union["TimeMixin", TestCase]
-
 
 class MockedDateTime(datetime):
     """
@@ -32,18 +33,22 @@ class MockedDateTime(datetime):
     """
 
     @classmethod
-    def utcnow(cls):
+    def utcnow(cls):  # type: ignore
         # noinspection PyUnresolvedReferences
         return timezone.utc.normalize(timezone.now())
 
 
-class TimeMixin:
+if TYPE_CHECKING:  # pragma: no cover
+    TimeMixinTarget = TestCase
+else:
+    TimeMixinTarget = object
+
+
+class TimeMixin(TimeMixinTarget):
     """ Mixin to freeze time in django tests."""
     now: datetime
 
-    # noinspection PyPep8Naming,PyAttributeOutsideInit
-    def setUp(self: TimeDerived):
-        # noinspection PyUnresolvedReferences
+    def setUp(self) -> None:
         super().setUp()
         self.now = timezone.now()
         self.now_patcher = mock.patch('django.utils.timezone.now',
@@ -55,14 +60,12 @@ class TimeMixin:
             new_callable=mock.PropertyMock(return_value=MockedDateTime))
         self.timezone_datetime_patcher.start()
 
-    # noinspection PyPep8Naming
-    def tearDown(self: TimeDerived):
-        # noinspection PyUnresolvedReferences
+    def tearDown(self) -> None:
         super().tearDown()
         self.timezone_datetime_patcher.stop()
         self.now_patcher.stop()
 
-    def get_now(self):
+    def get_now(self) -> datetime:
         return self.now
 
 
@@ -84,12 +87,14 @@ class BaseTestCaseMeta(type):
     """
     _created_objects: List[Tuple[int, models.Model]]
 
-    def __new__(mcs, name, bases, attrs):
+    def __new__(mcs, name: str, bases: Tuple[type, ...],
+                attrs: Dict[str, Any]) -> 'BaseTestCaseMeta':
         # Add created django model instances cache as class attribute
         attrs['_created_objects'] = []
-        return super().__new__(mcs, name, bases, attrs)
+        instance = super().__new__(mcs, name, bases, attrs)
+        return cast("BaseTestCaseMeta", instance)
 
-    def __setattr__(cls, key, value):
+    def __setattr__(cls, key: str, value: Any) -> None:
         if isinstance(value, models.Model):
             cls._created_objects.append((value.pk, value))
         return super().__setattr__(key, value)
@@ -99,7 +104,7 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
     """ Base class for django tests."""
 
     @classmethod
-    def refresh_objects(cls):
+    def refresh_objects(cls) -> None:
         """
         Reset in-memory changed for django models that are stored as
         class attributes.
@@ -107,18 +112,17 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
         for pk, obj in cls._created_objects:
             obj.pk = pk
             obj.refresh_from_db()
-            # noinspection PyProtectedMember
-            obj._state.fields_cache.clear()
+            obj._state.fields_cache.clear()  # type: ignore
 
     @classmethod
-    def forget_object(cls, obj: models.Model):
+    def forget_object(cls, obj: models.Model) -> None:
         """
         Method for removing django model instance from created objects cache
         """
         cls._created_objects.remove((obj.pk, obj))
 
     @staticmethod
-    def update_object(obj, *args, **kwargs):
+    def update_object(obj: models.Model, *args: Any, **kwargs: Any) -> None:
         """ Update django model object in database only."""
         args_iter = iter(args)
         kwargs.update(dict(zip(args_iter, args_iter)))
@@ -129,12 +133,12 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
         """ Fetch same object from database."""
         return obj._meta.model.objects.get(pk=obj.pk)
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.refresh_objects()
         super().setUp()
 
-    def assert_object_fields(self, obj: models.Model, **kwargs):
-        """ Obtains object from database and compares field values."""
+    def assert_object_fields(self, obj: models.Model, **kwargs: Any) -> None:
+        """ Obtains an object from database and compares field values."""
         if obj.pk:
             obj = self.reload(obj)
         for k, v in kwargs.items():
@@ -142,19 +146,21 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
             self.assertEqual(value, v)
 
 
-class AdminBaseTestCase(BaseTestCase):
+class AdminBaseTestCase(BaseTestCase, metaclass=ABCMeta):
     """ Base class for django admin smoke tests."""
     model_admin: Type[ModelAdmin]
     model: Type[models.Model]
     object_name: str
+    changelist_url: str
+    add_url: str
+    admin: ModelAdmin
 
     @classproperty
-    def opts(self):
-        # noinspection PyUnresolvedReferences
+    def opts(self) -> Options:
         return self.model._meta
 
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(cls) -> None:
         super().setUpTestData()
         cls.superuser = get_user_model().objects.create_superuser(
             username='admin', email='admin@gmail.com', password='admin_admin')
@@ -164,13 +170,13 @@ class AdminBaseTestCase(BaseTestCase):
         cls.add_url = reverse(
             f'admin:{cls.opts.app_label}_{cls.opts.model_name}_add')
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.client.login(username='admin', password='admin_admin')
 
     @staticmethod
     def reset_inline_data(data: dict, prefix: str, related: Optional[str],
-                          pk: str = 'id'):
+                          pk: str = 'id') -> None:
         """ Transforms saved records in formsets to new ones.
 
         :param data: form data dictionary
@@ -185,20 +191,20 @@ class AdminBaseTestCase(BaseTestCase):
         data[f'{prefix}-INITIAL_FORMS'] = 0
 
     @property
-    def change_url(self):
+    def change_url(self) -> str:
         """ Admin object edit page url."""
         return reverse(
             f'admin:{self.opts.app_label}_{self.opts.model_name}_change',
             kwargs={'object_id': self.get_object().pk})
 
     @property
-    def delete_url(self):
+    def delete_url(self) -> str:
         """ Admin delete confirmation page url."""
         return reverse(
             f'admin:{self.opts.app_label}_{self.opts.model_name}_delete',
             kwargs={'object_id': self.get_object().pk})
 
-    def get_object(self):
+    def get_object(self) -> models.Model:
         """ Get tested object."""
         return getattr(self, self.object_name)
 
@@ -208,7 +214,7 @@ class AdminBaseTestCase(BaseTestCase):
         """
         raise NotImplementedError()
 
-    def prepare_deletion(self):
+    def prepare_deletion(self) -> None:
         """
         Prepares object for deletion to exclude errors caused by
         on_delete=PROTECT.
@@ -216,12 +222,12 @@ class AdminBaseTestCase(BaseTestCase):
         pass
 
     @staticmethod
-    def get_form_data(form):
+    def get_form_data(form: ModelForm) -> Dict[str, Any]:
         """ Get initial request data from form."""
         initial = form.initial.copy()
         data = {}
         if hasattr(form, 'instance') and form.instance:
-            model = form._meta.model
+            model = form._meta.model  # type: ignore
             while model._meta.proxy:
                 model = model._meta.proxy_for_model
 
@@ -234,7 +240,8 @@ class AdminBaseTestCase(BaseTestCase):
                 field = form.fields[k]
                 v = field.prepare_value(v)
             except KeyError:
-                model_field = form._meta.model._meta.get_field(k)
+                _meta = form._meta.model._meta  # type: ignore
+                model_field: AutoField = _meta.get_field(k)
                 if model_field.primary_key:
                     data[k] = v
                 continue
@@ -254,12 +261,12 @@ class AdminBaseTestCase(BaseTestCase):
             data[key] = v
         return data
 
-    def get_form_data_from_response(self, r: HttpResponse):
+    def get_form_data_from_response(self, r: HttpResponse) -> Dict[str, Any]:
         """ Get form data from response context."""
         data = {'_continue': 'save and continue'}
         cd = getattr(r, 'context_data')
-        admin_form: AdminForm = cd['adminform']
-        data.update(self.get_form_data(admin_form.form))
+        form: ModelForm = cd['adminform'].form  # type: ignore
+        data.update(self.get_form_data(form))
         formsets = cd['inline_admin_formsets']
         for inline_formset in formsets:
             formset = inline_formset.formset
@@ -274,14 +281,14 @@ class AdminBaseTestCase(BaseTestCase):
         return data
 
     @staticmethod
-    def get_errors_from_response(r: HttpResponse):
+    def get_errors_from_response(r: HttpResponse) -> Dict[str, ErrorList]:
         """ Get error list from response context."""
-        data = {}
+        data: Dict[str, ErrorList] = {}
         if r.status_code == 302:
             return data
         cd = getattr(r, 'context_data')
-        admin_form: AdminForm = cd['adminform']
-        data.update(admin_form.form.errors)
+        form: ModelForm = cd['adminform'].form
+        data.update(form.errors)
         formsets = cd['inline_admin_formsets']
         for inline_formset in formsets:
             formset = inline_formset.formset
@@ -294,20 +301,23 @@ class AdminBaseTestCase(BaseTestCase):
         return data
 
 
-# type definition for subclasses with CommonAdminTests mixin
-AdminTestsDerived = Union["CommonAdminTests", AdminBaseTestCase]
+if TYPE_CHECKING:  # pragma: no cover
+    CommonAdminTestsTarget = AdminBaseTestCase
+else:
+    CommonAdminTestsTarget = object
 
 
-class CommonAdminTests:
+class CommonAdminTests(CommonAdminTestsTarget, metaclass=ABCMeta):
     """ Common smoke tests for django admin."""
 
-    def test_changelist(self: AdminTestsDerived):
+    def test_changelist(self) -> None:
         """ Object list ist rendered correctly."""
         url = self.changelist_url
         count = self.model.objects.count()
         self.assert_row_count(url, count)
 
-    def assert_row_count(self: AdminTestsDerived, url, count):
+    def assert_row_count(self, url: str,
+                         count: int) -> None:
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
         text = r.content.decode('utf-8')
@@ -324,9 +334,10 @@ class CommonAdminTests:
         self.assertInHTML(marker, text)
         return text
 
-    def post_changeform(self: AdminTestsDerived, create=False,
+    def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
-                        fields: Dict[str, Any] = None):
+                        fields: Dict[str, Any] = None
+                        ) -> Union[HttpResponseRedirect, HttpResponse]:
         """
         Fetches form data from change view and performs POST request.
 
@@ -357,12 +368,12 @@ class CommonAdminTests:
             data.update(fields)
         return self.client.post(url, data=data)
 
-    def test_changeform_view(self: AdminTestsDerived):
+    def test_changeform_view(self) -> None:
         """ Add object page opens correctly."""
         r = self.client.get(self.add_url)
         self.assertEqual(r.status_code, 200)
 
-    def test_changeform_save(self: AdminTestsDerived):
+    def test_changeform_save(self) -> None:
         """ Save same existing object works."""
         self.now += second
         r = self.post_changeform()
@@ -374,7 +385,7 @@ class CommonAdminTests:
             # check whether TimeStampedModel.modified timestamp has changed
             self.assert_object_fields(obj, modified=self.now)
 
-    def test_changeform_create(self: AdminTestsDerived):
+    def test_changeform_create(self) -> None:
         """ New object created correctly."""
         c = self.model.objects.count()
         self.now += second
@@ -383,12 +394,13 @@ class CommonAdminTests:
         self.assertFalse(self.get_errors_from_response(r))
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.model.objects.count(), c + 1)
-        obj = self.model.objects.order_by(self.opts.pk.name).last()
+        obj = cast(models.Model,
+                   self.model.objects.order_by(self.opts.pk.name).last())
         if hasattr(obj, 'created'):
             # checks TimeStampModel.created timestamp
-            self.assertEqual(obj.created, self.now)
+            self.assertEqual(obj.created, self.now)  # type: ignore
 
-    def test_delete(self: AdminTestsDerived):
+    def test_delete(self) -> None:
         """
         Deleting object works correctly.
         """
@@ -402,10 +414,10 @@ class CommonAdminTests:
             pk=self.get_object().pk).exists())
 
 
-class AdminTests(CommonAdminTests):
+class AdminTests(CommonAdminTests, metaclass=ABCMeta):
     """ smoke tests for full-functional django admin."""
 
-    def test_changeform_create_without_data(self: AdminTestsDerived):
+    def test_changeform_create_without_data(self) -> None:
         """
         Creating new object without required fields returns proper response
         with error list.
@@ -415,17 +427,17 @@ class AdminTests(CommonAdminTests):
         self.assertIsNotNone(self.get_errors_from_response(r))
 
 
-class ReadOnlyAdminTests(CommonAdminTests):
+class ReadOnlyAdminTests(CommonAdminTests, metaclass=ABCMeta):
     """ smoke tests for readonly django admin."""
 
-    def test_changeform_view(self: AdminTestsDerived):
+    def test_changeform_view(self) -> None:
         """
         New object admin page returns access denied.
         """
         r = self.client.get(self.add_url)
         self.assertEqual(r.status_code, 403)
 
-    def test_changeform_create(self: AdminTestsDerived):
+    def test_changeform_create(self) -> None:
         """
         POST to create admin view is denied.
         """
@@ -437,7 +449,7 @@ class ReadOnlyAdminTests(CommonAdminTests):
 
         self.assertEqual(r.status_code, 403)
 
-    def test_changeform_save(self: AdminTestsDerived):
+    def test_changeform_save(self) -> None:
         """
         Object changing is denied.
         """
@@ -448,7 +460,7 @@ class ReadOnlyAdminTests(CommonAdminTests):
 
         self.assertEqual(r.status_code, 403)
 
-    def test_delete(self: AdminTestsDerived):
+    def test_delete(self) -> None:
         """
         Object deletion is denied.
         """
