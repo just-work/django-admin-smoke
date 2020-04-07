@@ -1,4 +1,3 @@
-from abc import ABCMeta
 from datetime import timedelta, datetime
 from typing import (Any, TypeVar, Type, Union, Optional, List, Tuple, Iterable,
                     cast, TYPE_CHECKING, Dict)
@@ -146,7 +145,7 @@ class BaseTestCase(TimeMixin, TestCase, metaclass=BaseTestCaseMeta):
             self.assertEqual(value, v)
 
 
-class AdminBaseTestCase(BaseTestCase, metaclass=ABCMeta):
+class AdminBaseTestCase(BaseTestCase):
     """ Base class for django admin smoke tests."""
     model_admin: Type[ModelAdmin]
     model: Type[models.Model]
@@ -307,7 +306,8 @@ else:
     CommonAdminTestsTarget = object
 
 
-class CommonAdminTests(CommonAdminTestsTarget, metaclass=ABCMeta):
+# noinspection PyAbstractClass
+class CommonAdminTests(CommonAdminTestsTarget):
     """ Common smoke tests for django admin."""
 
     def test_changelist(self) -> None:
@@ -414,7 +414,8 @@ class CommonAdminTests(CommonAdminTestsTarget, metaclass=ABCMeta):
             pk=self.get_object().pk).exists())
 
 
-class AdminTests(CommonAdminTests, metaclass=ABCMeta):
+# noinspection PyAbstractClass
+class AdminTests(CommonAdminTests):
     """ smoke tests for full-functional django admin."""
 
     def test_changeform_create_without_data(self) -> None:
@@ -427,7 +428,8 @@ class AdminTests(CommonAdminTests, metaclass=ABCMeta):
         self.assertIsNotNone(self.get_errors_from_response(r))
 
 
-class ReadOnlyAdminTests(CommonAdminTests, metaclass=ABCMeta):
+# noinspection PyAbstractClass
+class ReadOnlyAdminTests(CommonAdminTests):
     """ smoke tests for readonly django admin."""
 
     def test_changeform_view(self) -> None:
