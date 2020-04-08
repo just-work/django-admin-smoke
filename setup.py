@@ -58,7 +58,7 @@ def get_version():
 
 
 setup(
-    name='django-admin-smoke',
+    name=package_name,
     version=get_version() or 'dev',
     long_description=long_description,
     long_description_content_type='text/markdown',
