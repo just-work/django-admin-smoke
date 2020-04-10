@@ -3,7 +3,7 @@ Django-admin-smoke
 
 Django-Admin-Smoke is a Django app providing smoke tests for django-admin.
 
-[![Build Status](https://travis-ci.org/just-work/django-admin-smoke.svg?branch=master)](https://travis-ci.org/just-work/django-admin-smoke)
+![build](https://github.com/just-work/django-admin-smoke/workflows/build/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/just-work/django-admin-smoke/branch/master/graph/badge.svg)](https://codecov.io/gh/just-work/django-admin-smoke)
 [![PyPI version](https://badge.fury.io/py/django-admin-smoke.svg)](https://badge.fury.io/py/django-admin-smoke)
 
