@@ -30,4 +30,3 @@ class ProjectAdmin(admin.ModelAdmin):
     inlines = (TaskInline, TagInline)
     list_display = ('pid', 'name',)
     list_editable = ('name',)
-    fields = ('name','members')

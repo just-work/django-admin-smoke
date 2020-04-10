@@ -272,7 +272,7 @@ class CommonAdminTests(AdminBaseTestCase):
             # checks TimeStampModel.created timestamp
             self.assertEqual(obj.created, self.now)  # type: ignore
 
-    def test_all_fields_present(self):
+    def test_all_fields_present(self) -> None:
         """ All not excluded fields are present on the form. """
         r = self.client.get(self.change_url)
         cd = getattr(r, 'context_data')
