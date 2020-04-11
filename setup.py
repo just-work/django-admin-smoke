@@ -70,6 +70,7 @@ setup(
     description='Smoke tests for Django admin',
     install_requires=[
         'Django',
+        'django-testing-utils',
     ],
     classifiers=[
         'Development Status :: 1 - Planning',
