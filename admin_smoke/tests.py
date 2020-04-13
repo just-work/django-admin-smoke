@@ -287,7 +287,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
         form: ModelForm = cd['adminform'].form
         model_fields = {f.name for f in self.opts.fields
                         if f.name not in self.excluded_fields
-                        and not f.primary_key or not f.editable}
+                        and not f.primary_key and f.editable}
         form_fields = set(form.Meta.fields)
         absent_fields = model_fields - form_fields
         self.assertFalse(absent_fields,
