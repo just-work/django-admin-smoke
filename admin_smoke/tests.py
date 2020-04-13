@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
-                    cast, TYPE_CHECKING, Dict)
+                    cast, Dict, List)
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
@@ -30,6 +30,7 @@ class AdminBaseTestCase(BaseTestCase):
     changelist_url: str
     add_url: str
     admin: ModelAdmin
+    excluded_fields: List[str] = [] #  fields excluded from presence check
 
     @classproperty
     def opts(self) -> Options:
@@ -177,14 +178,8 @@ class AdminBaseTestCase(BaseTestCase):
         return data
 
 
-if TYPE_CHECKING:  # pragma: no cover
-    CommonAdminTestsTarget = AdminBaseTestCase
-else:
-    CommonAdminTestsTarget = object
-
-
 # noinspection PyAbstractClass
-class CommonAdminTests(CommonAdminTestsTarget):
+class CommonAdminTests(AdminBaseTestCase):
     """ Common smoke tests for django admin."""
 
     def test_changelist(self) -> None:
@@ -213,7 +208,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
 
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
-                        fields: Dict[str, str] = None
+                        fields: Optional[Dict[str, str]] = None
                         ) -> Union[HttpResponseRedirect, HttpResponse]:
         """
         Fetches form data from change view and performs POST request.
@@ -276,6 +271,19 @@ class CommonAdminTests(CommonAdminTestsTarget):
         if hasattr(obj, 'created'):
             # checks TimeStampModel.created timestamp
             self.assertEqual(obj.created, self.now)  # type: ignore
+
+    def test_all_fields_present(self) -> None:
+        """ All not excluded fields are present on the form. """
+        r = self.client.get(self.change_url)
+        cd = getattr(r, 'context_data')
+        form: ModelForm = cd['adminform'].form
+        model_fields = {f.name for f in self.opts.fields
+                        if f.name not in self.excluded_fields
+                        and not f.primary_key}
+        form_fields = set(form.Meta.fields)
+        absent_fields = model_fields - form_fields
+        self.assertFalse(absent_fields,
+                         f'fields {list(absent_fields)} are absent on form.')
 
     def test_delete(self) -> None:
         """

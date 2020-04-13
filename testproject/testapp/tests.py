@@ -4,10 +4,11 @@ from admin_smoke import tests
 from testproject.testapp import admin, models
 
 
-class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
+class ProjectAdminTestCase(tests.AdminTests):
     model_admin = admin.ProjectAdmin
     model = models.Project
     object_name = 'project'
+    excluded_fields = ['client']
 
     @classmethod
     def setUpTestData(cls):
@@ -49,7 +50,7 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
             name="new_name")
 
 
-class TaskAdminTestCase(tests.ReadOnlyAdminTests, tests.AdminBaseTestCase):
+class TaskAdminTestCase(tests.ReadOnlyAdminTests):
     """ Tests for read-only task admin."""
     model_admin = admin.TaskAdmin
     model = models.Task

@@ -12,9 +12,15 @@ class Tag(models.Model):
     related = fields.GenericForeignKey()
 
 
+class Client(models.Model):
+    name = models.CharField(max_length=10, unique=True)
+
+
 class Project(models.Model):
     pid = models.AutoField(primary_key=True)
     name = models.CharField(max_length=10, unique=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True,
+                               blank=True)
     members = models.ManyToManyField(get_user_model(), blank=True)
     tags = fields.GenericRelation(Tag)
 

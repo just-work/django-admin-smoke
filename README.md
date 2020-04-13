@@ -29,6 +29,7 @@ class ProjectAdminTestCase(AdminTests, AdminBaseTestCase):
     model_admin = admin.ProjectAdmin  # ModelAdmin to test
     model = models.Project  # Django model to test against
     object_name = 'project'  # self.project is an edited object in this testcase
+    excluded_fields = ['client']  #  fields excluded from presence check
 
     def setUp(self):
         super().setUp()
