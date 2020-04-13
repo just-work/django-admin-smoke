@@ -23,6 +23,7 @@ class Project(models.Model):
                                blank=True)
     members = models.ManyToManyField(get_user_model(), blank=True)
     tags = fields.GenericRelation(Tag)
+    created = models.DateTimeField(auto_now_add=True, editable=False)
 
 
 class Task(models.Model):
