@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
-                    cast, Dict, List)
+                    cast, Dict, List, TYPE_CHECKING, ClassVar)
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
@@ -24,13 +24,15 @@ M = TypeVar('M', bound=models.Model)
 
 class AdminBaseTestCase(BaseTestCase):
     """ Base class for django admin smoke tests."""
-    model_admin: Type[ModelAdmin]
-    model: Type[models.Model]
-    object_name: str
+    model_admin: ClassVar[Type[ModelAdmin]]
+    model: ClassVar[Type[models.Model]]
+    object_name: ClassVar[str]
+    excluded_fields: ClassVar[List[str]] = []
+    # model fields omitted in model admin
+
     changelist_url: str
     add_url: str
     admin: ModelAdmin
-    excluded_fields: List[str] = [] #  fields excluded from presence check
 
     @classproperty
     def opts(self) -> Options:
@@ -178,8 +180,14 @@ class AdminBaseTestCase(BaseTestCase):
         return data
 
 
+if TYPE_CHECKING:  # pragma: no cover
+    CommonAdminTestsTarget = AdminBaseTestCase
+else:
+    CommonAdminTestsTarget = object
+
+
 # noinspection PyAbstractClass
-class CommonAdminTests(AdminBaseTestCase):
+class CommonAdminTests(CommonAdminTestsTarget):
     """ Common smoke tests for django admin."""
 
     def test_changelist(self) -> None:
@@ -279,7 +287,7 @@ class CommonAdminTests(AdminBaseTestCase):
         form: ModelForm = cd['adminform'].form
         model_fields = {f.name for f in self.opts.fields
                         if f.name not in self.excluded_fields
-                        and not f.primary_key}
+                        and not f.primary_key or not f.editable}
         form_fields = set(form.Meta.fields)
         absent_fields = model_fields - form_fields
         self.assertFalse(absent_fields,
