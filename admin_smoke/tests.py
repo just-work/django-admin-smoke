@@ -279,7 +279,6 @@ class CommonAdminTests(AdminBaseTestCase):
         form: ModelForm = cd['adminform'].form
         model_fields = {f.name for f in self.opts.fields
                         if f.name not in self.excluded_fields
-                        and not isinstance(f, AutoField)
                         and not f.primary_key}
         form_fields = set(form.Meta.fields)
         absent_fields = model_fields - form_fields
