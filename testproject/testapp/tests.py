@@ -16,6 +16,8 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
         cls.project = models.Project.objects.create(name='project', pid=123)
         cls.task = cls.project.task_set.create(
             name='task', attachment=SimpleUploadedFile("txt.doc", b'text'))
+        cls.task2 = cls.project.task_set.create(
+            name='task2', attachment=SimpleUploadedFile("txt.doc", b'text'))
         cls.tag = cls.project.tags.create(name='tag')
 
     def transform_to_new(self, data: dict) -> dict:
@@ -26,11 +28,13 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
         self.reset_inline_data(
             data, 'testapp-tag-content_type-object_id', None, pk='tid')
         data['task_set-0-name'] += '_new'
+        data['task_set-1-name'] += '_new'
         data['task_set-0-attachment'] = SimpleUploadedFile("doc.txt", b'text')
+        data['task_set-1-attachment'] = SimpleUploadedFile("doc.txt", b'text')
         return data
 
     def prepare_deletion(self):
-        self.task.delete()
+        self.project.task_set.all().delete()
 
     def test_post_changeform_arguments(self):
         """

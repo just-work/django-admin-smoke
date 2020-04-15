@@ -64,9 +64,15 @@ class AdminBaseTestCase(BaseTestCase):
             edited object (None for GenericInlineModelAdmin)
         :param pk: name of inline model primary key field
         """
-        del data[f'{prefix}-0-{pk}']
-        if related is not None:
-            del data[f'{prefix}-0-{related}']
+        i = 0
+        try:
+            while True:
+                del data[f'{prefix}-{i}-{pk}']
+                if related is not None:
+                    del data[f'{prefix}-{i}-{related}']
+                i += 1
+        except KeyError:
+            pass
         data[f'{prefix}-INITIAL_FORMS'] = 0
 
     @property
