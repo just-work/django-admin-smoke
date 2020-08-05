@@ -69,7 +69,7 @@ setup(
     author_email='zimbler@gmail.com',
     description='Smoke tests for Django admin',
     install_requires=[
-        'Django',
+        'Django>=2.2,<3.2',
         'django-testing-utils',
     ],
     classifiers=[
@@ -77,6 +77,7 @@ setup(
         'Environment :: Console',
         'Framework :: Django :: 2.2',
         'Framework :: Django :: 3.0',
+        'Framework :: Django :: 3.1',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
