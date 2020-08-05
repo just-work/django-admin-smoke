@@ -227,7 +227,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
 
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
-                        fields: Optional[Dict[str, str]] = None
+                        fields: Optional[Dict[str, Any]] = None
                         ) -> Union[HttpResponseRedirect, HttpResponse]:
         """
         Fetches form data from change view and performs POST request.
