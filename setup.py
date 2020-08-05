@@ -1,7 +1,7 @@
 import os
 import re
 import subprocess
-from setuptools import setup, find_packages  # type: ignore
+from setuptools import setup  # type: ignore
 from pathlib import Path
 
 with open('README.md') as f:
@@ -70,7 +70,7 @@ setup(
     description='Smoke tests for Django admin',
     install_requires=[
         'Django>=2.2,<3.2',
-        'django-testing-utils',
+        'django-testing-utils~=0.1',
     ],
     classifiers=[
         'Development Status :: 1 - Planning',
