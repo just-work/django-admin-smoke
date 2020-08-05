@@ -13,9 +13,14 @@ from django.forms.models import ModelForm
 from django.forms.utils import ErrorList
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.decorators import classproperty
 from django.utils.translation import gettext_lazy as _
 from django_testing_utils.mixins import BaseTestCase
+
+try:
+    from django.utils.decorators import classproperty
+except ImportError:
+    # Django-3.1+
+    from django.utils.functional import classproperty
 
 second = timedelta(seconds=1)
 
