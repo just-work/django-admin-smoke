@@ -51,7 +51,6 @@ class AdminBaseTestCase(BaseTestCase):
         super().setUpTestData()
         cls.superuser = get_user_model().objects.create_superuser(
             username='admin', email='admin@gmail.com', password='admin_admin')
-        cls.admin = cls.model_admin(cls.model, site)
         cls.changelist_url = reverse(
             f'admin:{cls.opts.app_label}_{cls.opts.model_name}_changelist')
         cls.add_url = reverse(
@@ -59,6 +58,7 @@ class AdminBaseTestCase(BaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        self.admin = self.model_admin(self.model, site)
         self.client.login(username='admin', password='admin_admin')
 
     @staticmethod
