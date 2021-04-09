@@ -4,6 +4,7 @@ from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import AutoField
 from django.db.models.fields.files import FieldFile
@@ -39,6 +40,8 @@ class AdminBaseTestCase(BaseTestCase):
     add_url: str
     admin: ModelAdmin
 
+    superuser: User
+
     @classproperty
     def opts(self) -> Options:
         return self.model._meta
@@ -48,7 +51,6 @@ class AdminBaseTestCase(BaseTestCase):
         super().setUpTestData()
         cls.superuser = get_user_model().objects.create_superuser(
             username='admin', email='admin@gmail.com', password='admin_admin')
-        cls.admin = cls.model_admin(cls.model, site)
         cls.changelist_url = reverse(
             f'admin:{cls.opts.app_label}_{cls.opts.model_name}_changelist')
         cls.add_url = reverse(
@@ -56,6 +58,7 @@ class AdminBaseTestCase(BaseTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        self.admin = self.model_admin(self.model, site)
         self.client.login(username='admin', password='admin_admin')
 
     @staticmethod
