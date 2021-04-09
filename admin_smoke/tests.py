@@ -4,6 +4,7 @@ from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import AutoField
 from django.db.models.fields.files import FieldFile
@@ -38,6 +39,8 @@ class AdminBaseTestCase(BaseTestCase):
     changelist_url: str
     add_url: str
     admin: ModelAdmin
+
+    superuser: User
 
     @classproperty
     def opts(self) -> Options:
