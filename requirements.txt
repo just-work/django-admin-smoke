@@ -1,3 +1,3 @@
 dj-inmemorystorage==2.1.0
-Django==3.2
+Django==3.2.3
 django-testing-utils==0.3.0
