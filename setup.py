@@ -69,8 +69,8 @@ setup(
     author_email='zimbler@gmail.com',
     description='Smoke tests for Django admin',
     install_requires=[
-        'Django>=2.2,<3.3',
-        'django-testing-utils~=0.3',
+        'Django>=2.2,<4.1',
+        'django-testing-utils~=0.4',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
