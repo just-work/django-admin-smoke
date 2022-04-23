@@ -14,14 +14,15 @@ from django.forms.models import ModelForm
 from django.forms.utils import ErrorList
 from django.http.response import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django_testing_utils.mixins import BaseTestCase  # type: ignore
 
 try:
-    from django.utils.decorators import classproperty
-except ImportError:
     # Django-3.1+
-    from django.utils.functional import classproperty  # type: ignore
+    from django.utils.functional import classproperty
+except ImportError:
+    from django.utils.decorators import classproperty  # type: ignore
 
 second = timedelta(seconds=1)
 
@@ -30,6 +31,7 @@ M = TypeVar('M', bound=models.Model)
 
 class AdminBaseTestCase(BaseTestCase):
     """ Base class for django admin smoke tests."""
+    opts: Options
     model_admin: ClassVar[Type[ModelAdmin]]
     model: ClassVar[Type[models.Model]]
     object_name: ClassVar[str]
@@ -42,9 +44,10 @@ class AdminBaseTestCase(BaseTestCase):
 
     superuser: User
 
-    @classproperty
-    def opts(self) -> Options:
-        return self.model._meta
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.opts = cls.model._meta
+        super().setUpClass()
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -214,7 +217,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
                          count: int) -> None:
         r = self.client.get(url)
         self.assertEqual(r.status_code, 200)
-        text = r.content.decode('utf-8')
+        text = mark_safe(r.content.decode('utf-8'))
         if count == 1:
             n = self.opts.verbose_name
         else:
@@ -226,7 +229,6 @@ class CommonAdminTests(CommonAdminTestsTarget):
             save = ''
         marker = f'<p class="paginator">{count} {n}{save}</p>'
         self.assertInHTML(marker, text)
-        return text
 
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
@@ -288,6 +290,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
         self.assertFalse(self.get_errors_from_response(r))
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.model.objects.count(), c + 1)
+        assert self.opts.pk is not None
         obj = cast(models.Model,
                    self.model.objects.order_by(self.opts.pk.name).last())
         if hasattr(obj, 'created'):
