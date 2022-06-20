@@ -12,7 +12,7 @@ from django.db.models.options import Options
 from django.forms import MultiWidget
 from django.forms.models import ModelForm
 from django.forms.utils import ErrorList
-from django.http.response import HttpResponse, HttpResponseRedirect
+from django.http.response import HttpResponseBase
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -120,7 +120,7 @@ class AdminBaseTestCase(BaseTestCase):
     @staticmethod
     def get_form_data(form: ModelForm) -> Dict[str, Any]:
         """ Get initial request data from form."""
-        initial = form.initial.copy()
+        initial = dict(form.initial)
         data = {}
         if hasattr(form, 'instance') and form.instance:
             model = form._meta.model  # type: ignore
@@ -157,7 +157,7 @@ class AdminBaseTestCase(BaseTestCase):
             data[key] = v
         return data
 
-    def get_form_data_from_response(self, r: HttpResponse) -> Dict[str, Any]:
+    def get_form_data_from_response(self, r: HttpResponseBase) -> Dict[str, Any]:
         """ Get form data from response context."""
         data = {'_continue': 'save and continue'}
         cd = getattr(r, 'context_data')
@@ -177,7 +177,7 @@ class AdminBaseTestCase(BaseTestCase):
         return data
 
     @staticmethod
-    def get_errors_from_response(r: HttpResponse) -> Dict[str, ErrorList]:
+    def get_errors_from_response(r: HttpResponseBase) -> Dict[str, ErrorList]:
         """ Get error list from response context."""
         data: Dict[str, ErrorList] = {}
         if r.status_code == 302:
@@ -233,7 +233,7 @@ class CommonAdminTests(CommonAdminTestsTarget):
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
                         fields: Optional[Dict[str, Any]] = None
-                        ) -> Union[HttpResponseRedirect, HttpResponse]:
+                        ) -> HttpResponseBase:
         """
         Fetches form data from change view and performs POST request.
 
