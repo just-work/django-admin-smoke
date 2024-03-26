@@ -9,6 +9,7 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
     model = models.Project
     object_name = 'project'
     excluded_fields = ['client']
+    project: models.Project
 
     @classmethod
     def setUpTestData(cls):
@@ -59,6 +60,7 @@ class TaskAdminTestCase(tests.ReadOnlyAdminTests, tests.AdminBaseTestCase):
     model_admin = admin.TaskAdmin
     model = models.Task
     object_name = 'task'
+    project: models.Project
 
     @classmethod
     def setUpTestData(cls):

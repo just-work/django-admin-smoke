@@ -1,4 +1,7 @@
+from typing import Type
+
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -21,7 +24,7 @@ class Project(models.Model):
     name = models.CharField(max_length=10, unique=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True,
                                blank=True)
-    members = models.ManyToManyField(get_user_model(), blank=True)
+    members = models.ManyToManyField(User, blank=True)
     tags = fields.GenericRelation(Tag)
     created = models.DateTimeField(auto_now_add=True, editable=False)
 

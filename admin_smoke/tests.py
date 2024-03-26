@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
-                    cast, Dict, List, TYPE_CHECKING, ClassVar)
+                    cast, Dict, List, TYPE_CHECKING, ClassVar, Generic)
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
@@ -29,11 +29,11 @@ second = timedelta(seconds=1)
 M = TypeVar('M', bound=models.Model)
 
 
-class AdminBaseTestCase(BaseTestCase):
+class AdminBaseTestCase(BaseTestCase, Generic[M]):
     """ Base class for django admin smoke tests."""
     opts: Options
-    model_admin: ClassVar[Type[ModelAdmin]]
-    model: ClassVar[Type[models.Model]]
+    model_admin: Type[ModelAdmin]
+    model: Type[M]
     object_name: ClassVar[str]
     excluded_fields: ClassVar[List[str]] = []
     # model fields omitted in model admin
@@ -100,7 +100,7 @@ class AdminBaseTestCase(BaseTestCase):
             f'admin:{self.opts.app_label}_{self.opts.model_name}_delete',
             kwargs={'object_id': self.get_object().pk})
 
-    def get_object(self) -> models.Model:
+    def get_object(self) -> M:
         """ Get tested object."""
         return getattr(self, self.object_name)
 
