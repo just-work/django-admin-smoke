@@ -236,13 +236,11 @@ class CommonAdminTests(CommonAdminTestsTarget):
 
     def assert_auto_now_add_created(self, obj: M) -> None:
         # checks TimeStampModel.created timestamp
-        self.assertEqual(getattr(obj, self.created_field),
-                         self.now)  # type: ignore
+        self.assert_object_fields(obj, **{self.created_field: self.now})
 
     def assert_auto_now_modified(self, obj: M) -> None:
         # checks TimeStampModel.modified timestamp
-        self.assertEqual(getattr(obj, self.modified_field),
-                         self.now)  # type: ignore
+        self.assert_object_fields(obj, **{self.modified_field: self.now})
 
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
