@@ -1,6 +1,3 @@
-from typing import Type
-
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -27,6 +24,7 @@ class Project(models.Model):
     members = models.ManyToManyField(User, blank=True)
     tags = fields.GenericRelation(Tag)
     created = models.DateTimeField(auto_now_add=True, editable=False)
+    modified = models.DateTimeField(auto_now=True, editable=False)
 
 
 class Task(models.Model):

@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import (Any, TypeVar, Type, Union, Optional, Iterable,
-                    cast, Dict, List, TYPE_CHECKING, ClassVar, Generic)
+                    Dict, List, TYPE_CHECKING, ClassVar, Generic)
 
 from django.contrib.admin import ModelAdmin, site
 from django.contrib.auth import get_user_model
@@ -157,7 +157,9 @@ class AdminBaseTestCase(BaseTestCase, Generic[M]):
             data[key] = v
         return data
 
-    def get_form_data_from_response(self, r: HttpResponseBase) -> Dict[str, Any]:
+    def get_form_data_from_response(
+        self, r: HttpResponseBase
+    ) -> Dict[str, Any]:
         """ Get form data from response context."""
         data = {'_continue': 'save and continue'}
         cd = getattr(r, 'context_data')
@@ -206,6 +208,8 @@ else:
 # noinspection PyAbstractClass
 class CommonAdminTests(CommonAdminTestsTarget):
     """ Common smoke tests for django admin."""
+    created_field = 'created'
+    modified_field = 'modified'
 
     def test_changelist(self) -> None:
         """ Object list ist rendered correctly."""
@@ -229,6 +233,14 @@ class CommonAdminTests(CommonAdminTestsTarget):
             save = ''
         marker = f'<p class="paginator">{count} {n}{save}</p>'
         self.assertInHTML(marker, text)
+
+    def assert_auto_now_add_created(self, obj: M) -> None:
+        # checks TimeStampModel.created timestamp
+        self.assert_object_fields(obj, **{self.created_field: self.now})
+
+    def assert_auto_now_modified(self, obj: M) -> None:
+        # checks TimeStampModel.modified timestamp
+        self.assert_object_fields(obj, **{self.modified_field: self.now})
 
     def post_changeform(self, create: bool = False,
                         erase: Union[None, str, Iterable[str]] = None,
@@ -277,25 +289,23 @@ class CommonAdminTests(CommonAdminTestsTarget):
         self.assertEqual(r.status_code, 302)
 
         obj = self.get_object()
-        if hasattr(obj, 'modified'):
-            # check whether TimeStampedModel.modified timestamp has changed
-            self.assert_object_fields(obj, modified=self.now)
+        if self.modified_field and hasattr(obj, self.modified_field):
+            self.assert_auto_now_modified(obj)
 
     def test_changeform_create(self) -> None:
         """ New object created correctly."""
         c = self.model.objects.count()
         self.now += second
+        existing = list(self.model.objects.values_list('pk', flat=True))
 
         r = self.post_changeform(create=True)
         self.assertFalse(self.get_errors_from_response(r))
         self.assertEqual(r.status_code, 302)
         self.assertEqual(self.model.objects.count(), c + 1)
         assert self.opts.pk is not None
-        obj = cast(models.Model,
-                   self.model.objects.order_by(self.opts.pk.name).last())
-        if hasattr(obj, 'created'):
-            # checks TimeStampModel.created timestamp
-            self.assertEqual(obj.created, self.now)  # type: ignore
+        obj = self.model.objects.exclude(pk__in=existing).get()
+        if self.created_field and hasattr(obj, self.created_field):
+            self.assert_auto_now_add_created(obj)
 
     def test_all_fields_present(self) -> None:
         """ All not excluded fields are present on the form. """
