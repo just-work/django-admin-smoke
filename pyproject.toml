@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-git-versioning"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+
+[project]
+name = "django-admin-smoke"
+dynamic = ["version"]
+description = "Smoke tests library for Django Admin"
+readme = "README.md"
+authors = [
+    { name = "Sergey Tikhonov", email = "zimbler@gmail.com" },
+]
+
+dependencies = [
+    "Django>=3.2,<5.0",
+    "django-testing-utils~=0.5.0",
+]
+license = { text = "MIT" }
+keywords = [
+    "django",
+    "admin",
+    "smoke",
+    "tests",
+]
+classifiers = [
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Framework :: Django :: 2.2',
+        'Framework :: Django :: 3.0',
+        'Framework :: Django :: 3.1',
+        'Framework :: Django :: 3.2',
+        'Framework :: Django :: 4.0',
+        'Framework :: Django :: 4.1',
+        'Framework :: Django :: 4.2',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Topic :: Software Development :: Testing',
+]
+
+[project.urls]
+homepage = "https://github.com/just-work/django-admin-smoke"
