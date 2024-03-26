@@ -16,7 +16,7 @@ authors = [
 ]
 
 dependencies = [
-    "Django>=3.2,<5.1",
+    "Django>=3.2,<5.0",
     "django-testing-utils~=0.6.0",
 ]
 license = { text = "MIT" }
@@ -36,7 +36,6 @@ classifiers = [
         'Framework :: Django :: 4.0',
         'Framework :: Django :: 4.1',
         'Framework :: Django :: 4.2',
-        'Framework :: Django :: 5.0',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
