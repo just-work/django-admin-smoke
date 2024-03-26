@@ -59,7 +59,7 @@ def get_version():
 
 setup(
     name=package_name,
-    version=get_version() or 'dev',
+    version=get_version() or '0.0.0.dev1',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=['admin_smoke'],
@@ -69,7 +69,7 @@ setup(
     author_email='zimbler@gmail.com',
     description='Smoke tests for Django admin',
     install_requires=[
-        'Django>=2.2,<4.2',
+        'Django>=2.2,<5.0',
         'django-testing-utils~=0.5',
     ],
     classifiers=[
@@ -81,12 +81,15 @@ setup(
         'Framework :: Django :: 3.2',
         'Framework :: Django :: 4.0',
         'Framework :: Django :: 4.1',
+        'Framework :: Django :: 4.2',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Software Development :: Testing',
     ]
 )
