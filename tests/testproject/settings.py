@@ -84,6 +84,8 @@ DATABASES = {
     }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -122,9 +124,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
-# Django-3.2 compat
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Mocked file storage for tests
 DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
