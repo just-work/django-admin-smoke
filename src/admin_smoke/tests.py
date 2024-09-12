@@ -312,9 +312,10 @@ class CommonAdminTests(CommonAdminTestsTarget):
         r = self.client.get(self.change_url)
         cd = getattr(r, 'context_data')
         form: ModelForm = cd['adminform'].form
-        model_fields = {f.name for f in self.opts.fields
+        model_fields = {f.name for f in self.opts.get_fields()
                         if f.name not in self.excluded_fields
-                        and not f.primary_key and f.editable}
+                        and not getattr(f, "primary_key", None)
+                        and getattr(f, "editable", None)}
         form_fields = set(form.Meta.fields)
         absent_fields = model_fields - form_fields
         self.assertFalse(absent_fields,

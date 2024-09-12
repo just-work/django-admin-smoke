@@ -55,6 +55,12 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
             name="new_name")
 
 
+class InnerProjectAdminTestCase(ProjectAdminTestCase):
+    model_admin = admin.InnerProjectAdmin
+    model = models.InnerProject
+    excluded_fields = ['client', 'members']
+
+
 class TaskAdminTestCase(tests.ReadOnlyAdminTests, tests.AdminBaseTestCase):
     """ Tests for read-only task admin."""
     model_admin = admin.TaskAdmin
