@@ -316,7 +316,11 @@ class CommonAdminTests(CommonAdminTestsTarget):
                         if f.name not in self.excluded_fields
                         and not getattr(f, "primary_key", None)
                         and getattr(f, "editable", None)}
-        form_fields = set(form.Meta.fields)
+        form_fields = form._meta.fields
+        if form_fields is None:
+            form_fields = model_fields
+        else:
+            form_fields = set(form_fields)
         absent_fields = model_fields - form_fields
         self.assertFalse(absent_fields,
                          f'fields {list(absent_fields)} are absent on form.')
