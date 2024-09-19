@@ -1,14 +1,18 @@
+from typing import TYPE_CHECKING
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from admin_smoke import tests
 from testproject.testapp import admin, models
 
+if TYPE_CHECKING:
+    ProjectAdminMixinTarget = tests.AdminTests
+else:
+    ProjectAdminMixinTarget = object
 
-class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
-    model_admin = admin.ProjectAdmin
-    model = models.Project
+
+class ProjectAdminMixin(ProjectAdminMixinTarget):
     object_name = 'project'
-    excluded_fields = ['client']
     project: models.Project
 
     @classmethod
@@ -53,6 +57,22 @@ class ProjectAdminTestCase(tests.AdminTests, tests.AdminBaseTestCase):
         self.assert_object_fields(
             self.project,
             name="new_name")
+
+
+class ProjectAdminTestCase(
+    ProjectAdminMixin, tests.AdminTests, tests.AdminBaseTestCase,
+):
+    model_admin = admin.ProjectAdmin
+    model = models.Project
+    excluded_fields = ['client']
+
+
+class InnerProjectAdminTestCase(
+    ProjectAdminMixin, tests.AdminTests, tests.AdminBaseTestCase,
+):
+    model_admin = admin.InnerProjectAdmin
+    model = models.InnerProject
+    excluded_fields = ['client', 'members']
 
 
 class TaskAdminTestCase(tests.ReadOnlyAdminTests, tests.AdminBaseTestCase):

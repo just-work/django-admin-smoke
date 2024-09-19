@@ -31,3 +31,11 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ('pid', 'name',)
     list_editable = ('name',)
     exclude = ('client',)
+
+
+@admin.register(models.InnerProject)
+class InnerProjectAdmin(admin.ModelAdmin):
+    inlines = (TaskInline, TagInline)
+    list_display = ('pid', 'name',)
+    list_editable = ('name',)
+    fields = ('name', )

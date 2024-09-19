@@ -32,3 +32,8 @@ class Task(models.Model):
     name = models.CharField(max_length=10, unique=True)
     attachment = models.FileField()
     visible = models.BooleanField(default=True)
+
+
+class InnerProject(Project):
+    class Meta:
+        proxy = True
